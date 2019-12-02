@@ -49,7 +49,6 @@ $(document).on ("click", ".clicker", function(event){
 		newPopCent = newPopCent + "0";
 	}
 	$('#newPopProgress').val(newPopCent);
-
 	$('#newPopCent').html(newPopCent);
 });
 
@@ -71,7 +70,6 @@ $(document).on ("click", ".hire", function(event){
 		numOfLumberjacks++;
 		if (numOfLumberjacks=>1){
 			$('#woodCaption').css('display', 'inline');
-
 		}
 		updateLumberjacks(numOfLumberjacks);
 		$('#chop').css('display', 'inline');
@@ -85,23 +83,25 @@ $(document).on ("click", ".hire", function(event){
 		
 	}
 	updateWorkers(numOfWorkers);
-
 	refreshJobs();
-
 });
 $(document).on ("click", ".overseer", function(event){
 	var numOfOverseers = fetchNumOfOverseers();
 	if (numOfOverseers<1){
 		return;
 	}
+	numOfOverseers--;
+	updateOverseers(numOfOverseers);
 	if (event.target.id=='overseeFarm'){
 		var numOfFarmOverseers = fetchNumOfFarmOverseers();
 		numOfFarmOverseers++;	
+		updateFarmOverseers(numOfFarmOverseers);
+	} else if (event.target.id=='overseeForest'){
+		var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
+		numOfLumberjackOverseers++;
+		updateLumberjackOverseers(numOfLumberjackOverseers);	
 	}
-	numOfOverseers--;
-	updateFarmOverseers(numOfFarmOverseers);
-	updateOverseers(numOfOverseers);
-		refreshJobs();
+	refreshJobs();
 	
 });
 function blink(selector, color){
@@ -140,6 +140,9 @@ function fetchNumOfOverseers(){
 }
 function fetchNumOfFarmOverseers(){
 	return Number($("#numOfFarmOverseers").html());
+}
+function fetchNumOfLumberjackOverseers(){
+	return Number($('#numOfLumberjackOverseers').html());
 }
 function fetchNumOfLumberjacks(){
 	return Number($("#numOfLumberjacks").html());
@@ -213,6 +216,7 @@ function flashUI(selector){
 }
 function overseeWork(){
 	var numOfFarmOverseers = fetchNumOfFarmOverseers();
+	var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
 	if (numOfFarmOverseers>0){
 		var numOfFarmers = fetchNumOfFarmers();
 		var food = fetchFood();
@@ -227,14 +231,30 @@ function overseeWork(){
 		}
 		updateFood(food);
 	}
+	if (numOfLumberjackOverseers>0){
+		var numOfLumberjacks = fetchNumOfLumberjacks();
+		var wood = fetchWood();
+		var woodProduction = numOfLumberjacks * (1- (.1/numOfLumberjackOverseers));
+		var woodDelta = Math.trunc (woodProduction);
+		wood+=woodDelta;
+		woodDelta=woodProduction-woodDelta;
+		if (woodDelta<1){
+			if(Math.random() * 1 <= woodDelta){
+				wood++;
+			}
+		}
+		updateWood(wood);
+	}
 }
 function refreshJobs(){
 	var numOfWorkers = fetchNumOfWorkers();
 	var food = fetchFood();
 	var numOfClicks = fetchNumOfClicks();
 	var numOfFarmers = fetchNumOfFarmers();
+	var numOfLumberjacks = fetchNumOfLumberjacks();
 	var numOfOverseers = fetchNumOfOverseers();
 	var numOfFarmOverseers = fetchNumOfFarmOverseers();
+	var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
 	var numOfPeople = fetchNumOfPeople();
 	if (numOfWorkers<2){
 		$(".hire").css("display", "none");
@@ -265,7 +285,6 @@ function refreshJobs(){
 		if (food<numOfPeople){
 			blinkButton("#farm");
 		} else {
-			console.log(food + ' ' +numOfPeople);
 			stopBlinkingButton('#farm');
 		}
 		$("#farm").css('display', 'inline');
@@ -273,12 +292,23 @@ function refreshJobs(){
 	if (numOfOverseers<1){
 		$(".overseer").css('display', 'none');
 	} else if (numOfOverseers>0){
-		$(".overseer").css('display', 'inline');
+		if (numOfFarmers>0){
+			$('#overseeFarm').css('display', 'inline');
+		} 
+		console.log(numOfLumberjacks);
+		if (numOfLumberjacks>0){
+			$('#overseeForest').css('display', 'inline');
+		}
 	}
 	if (numOfFarmOverseers>0){
 		$("#farmOverseerCaption").css('display', 'inline');	
 	} else {
 		$("#farmOverseerCaption").css('display', 'none');	
+	}
+	if (numOfLumberjackOverseers>0){
+		$("#lumberjackOverseerCaption").css('display', 'inline');	
+	} else {
+		$("#lumberjackOverseerCaption").css('display', 'none');	
 	}
 }
 function startTimer (){
@@ -333,12 +363,16 @@ function updateFood(n){
 }
 function updateLumberjacks(n){
 	$('#numOfLumberjacks').html(n);
+	$('#chop').val('+' + n);
 }
 function updateOverseers(n){
 	$("#numOfOverseers").html(n);
 }
 function updateFarmOverseers(n){
 	$("#numOfFarmOverseers").html(n);
+}
+function updateLumberjackOverseers(n){
+	$('#numOfLumberjackOverseers').html(n);
 }
 function updatePeople(n){
 	$("#numOfPeople").html(n);
