@@ -4,20 +4,19 @@
 	.clicker {
  		 touch-action: manipulation;
 	}	
-
+	.menuButton:not(.active){
+		color:blue;
+	}
+	.menuButton:not(.active):hover{
+		text-decoration:underline;
+		color:black;
+		cursor:pointer;
+	}
 	div, .btn{
 		font-size:75px;
 	}
 	.clicker{
 		width:150;
-	}
-	.clicker:not(#work),   .hire, .otherWorkers, 
-	.overseer {
-		display:none;
-	}
-	#farmerContainer, #workerContainer {
-		display:inline-block;
-		border:1;
 	}
 	.hidden{
 		display:none;
@@ -32,89 +31,97 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 	</head>
 	<body>
-		<div>
-			<div id="timeCaption" class='hidden'>
-				<span id='timeRemaining'>
-					<span id='minutesRemaining'>00</span>:<span 
-					id='secondsRemaining'>30</span>
-				</span>
-			</div>
-			<div>
-				Clicks: <span id='numOfClicks'>0</span>
-				<input id='work' class='worker clicker blinking' type='button' 
-				value='+1'>
-			</div><div>
-				<span id="foodCaption" class='hidden'>
-					Food:
-					<span id='numOfFood'>0</span>
-					<input id='farm' class='farmer clicker ' 
-	 				type='button' 
-					value='+0'>
-				</span>
-			</div><div>
-				<span id="woodCaption" class='hidden'>
-					Wood:
-					<span id='numOfWood'>0</span>
-					<input id='chop' class='lumberjack clicker ' 
-	 				type='button' 
-					value='+0'>
-				</span>
-			</div><div>
-				<span id="woodCaption" class='hidden'>
-					Wood:
-					<span id='numOfWood'>0</span>
-					<input id='chop' class='lumberjack clicker ' 
-	 				type='button' 
-					value='+0'>
-				</span>
-
-
-			</div>
-		</div><div id='peopleContainer' class='hidden'>
-			<div id='peopleCaption' class='hidden'> 
-				People: <span id='numOfPeople'>1</span>
-				<progress id='newPopProgress' value='0' max='100'></progress>
-				<span id='newPopCentCaption' class=''>
-					(<span id='newPopCent'>0</span>%)
-				</span>
-				<input type='hidden' id='clickCounter' value='0'>
-			</div>
-			<div>
-				Workers:
-				<span id='numOfWorkers'>1</span>
-				<div>
-				<span id='farmerCaption' class='otherWorkers'>
-					Farmers:
-					<span id='numOfFarmers'>0</span >
-					<input type='button' id='addFarmer' 
-					class='hire ' value='+'>
-					<span id='farmOverseerCaption' class='hidden'>
-						[<span id='numOfFarmOverseers'>0</span>]
-					</span>
-					<input type='button' id='overseeFarm'
-				        class='overseer ' value='&#8734'>
-				</span>
-				</div><div>
-				<span id='lumberjackCaption' class='otherWorkers'>
-					Lumberjacks:
-					<span id='numOfLumberjacks'>0</span>
-					<input type='button' id='addLumberjack' class='hire' value='+'>
-					<span id='lumberjackOverseerCaption' class='hidden'>
-						[<span id='numOfLumberjackOverseers'>0</span>]
-					</span>
-					<input type='button' id='overseeForest' class='overseer' 
-	  				value='&#8734'>
-				</span>
-				</div><div>
-				<span id='overseerCaption' class='otherWorkers'>
-					Overseers:
-					<span id="numOfOverseers">0</span>
-					<input type='button' id='addOverseer' 
-					class='hire ' value='+'>
-				</span>
-				</div>
-			</div>
+		<div id='startMenu'>
+			Clicks:0
+			<input id='start' class='worker clicker blinking' type='button' 
+			value='+1'>
+	</div><div id='menu' class='hidden'>
+		<ul class="nav nav-tabs">
+		  <li id='timeCaption'>
+			<span id='timeRemaining'>
+				<span id='minutesRemaining'>00</span>:<span 
+				id='secondsRemaining'>30</span>
+			</span>
+		  </li>
+		  <li class="nav-item">
+		    <a id='capitalMenuButton' class="nav-link active" href="#">Capital</a>
+		  </li>
+		  <li class="nav-item">
+		    <a id='laborMenuButton' class="nav-link" href="#">
+			    Labor:<span id='numOfPeople'>1</span>
+		    </a>
+		  </li>
+		</ul>
+	</div><div id='capital' class='hidden'>
+		<progress id='newPopProgress' value='0' max='100'></progress>
+		<span id='newPopCentCaption' class=''>
+			(<span id='newPopCent'>0</span>%)
+		</span>
+		<input type='hidden' id='clickCounter' value='0'>
+		<div id='clicksCaption' >
+			Clicks:<span id='numOfClicks'>0</span>
+			<input id='work' class='worker clicker blinking' type='button' 
+			value='+1'>
+		</div><div id="foodCaption" class='hidden'>
+			Food:
+			<span id='numOfFood'>0</span>
+			<input id='farm' class='farmer clicker ' 
+			type='button' 
+			value='+0'>
 		</div>
+		<div id="woodCaption" class='hidden'>
+			Wood:
+			<span id='numOfWood'>0</span>
+			<input id='chop' class='lumberjack clicker ' 
+			type='button' 
+			value='+0'>
+		</div>
+		<div id="stoneCaption" class='hidden'>
+			Stone:
+			<span id='numOfStone'>0</span>
+			<input id='cutStone' class='stoneCutter clicker' 
+			type='button' 
+			value='+0'>
+		</div>
+	</div><div id='labor' class='hidden'>
+		<div id='workerCaption'>
+			Workers:
+			<span id='numOfWorkers'>1</span>
+		</div><div id='farmerCaption' class='otherWorkers hidden'>
+			Farmers:
+			<span id='numOfFarmers'>0</span >
+			<input type='button' id='addFarmer' 
+			class='hire ' value='+'>
+			<span id='farmOverseerCaption' class='hidden'>
+				[<span id='numOfFarmOverseers'>0</span>]
+			</span>
+			<input type='button' id='overseeFarm'
+		        class='overseer ' value='&#8734'>
+		</div><div id='lumberjackCaption' class='otherWorkers hidden'>
+			Lumberjacks:
+			<span id='numOfLumberjacks'>0</span>
+			<input type='button' id='addLumberjack' class='hire' value='+'>
+			<span id='lumberjackOverseerCaption' class='hidden'>
+				[<span id='numOfLumberjackOverseers'>0</span>]
+			</span>
+			<input type='button' id='overseeForest' class='overseer' 
+			value='&#8734'>
+		</div><div id='stoneCutterCaption' class='otherWorkers hidden'>
+			Stone Cutters:
+			<span id='numOfStoneCutters'>0</span>
+			<input type='button' id='addStoneCutter' class='hire' value='+'>
+			<span id='stoneCutterOverseerCaption' class='hidden'>
+				[<span id='numOfStoneCutterOverseers'>0</span>]
+			</span>
+			<input type='button' id='overseeQuarry' class='overseer' 
+			value='&#8734'>
+		</div><div id='overseerCaption' class='otherWorkers hidden'>
+			Overseers:
+			<span id="numOfOverseers">0</span>
+			<input type='button' id='addOverseer' 
+			class='hire ' value='+'>
+		</div>
+	</div>
 
 </body>
 

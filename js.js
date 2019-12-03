@@ -1,9 +1,21 @@
 var timer;
 var flashingUI;
+$(document).on ('click', '#capitalMenuButton', function(event){
+	$('#capital').removeClass('hidden');
+	$('#labor').addClass('hidden');
+	$('#laborMenuButton').removeClass('active');
+	$('#capitalMenuButton').addClass('active');
+});
+$(document).on ('click', '#laborMenuButton', function(event){
+	$('#labor').removeClass('hidden');
+	$('#capital').addClass('hidden');
+	$('#capitalMenuButton').removeClass('active');
+	$('#laborMenuButton').addClass('active');
+});
 $(document).on ("click", ".clicker", function(event){
-	var numOfWorkers = fetchNumOfWorkers();
-	var numOfFarmers = fetchNumOfFarmers();
-	var numOfPeople = fetchNumOfPeople();
+	var numOfWorkers = fetch('Workers');
+	var numOfFarmers = fetch('Farmers');
+	var numOfPeople = fetch('People');
 	var chanceToCreateNewPerson = numOfPeople*4;
 	var clickCounter = Number($('#clickCounter').val());
 	clickCounter++;
@@ -11,30 +23,44 @@ $(document).on ("click", ".clicker", function(event){
 		var floorChance = clickCounter-numOfPeople;
 	}
 
-	if ($("#" + event.target.id).hasClass('worker')){
-		var numOfClicks = fetchNumOfClicks();
+	if (event.target.id == 'work' || event.target.id=='start'){
+		var numOfClicks = fetch('Clicks');
 		if (numOfClicks==0){
 			timer = startTimer();
-			$("#peopleCaption").css("display", "inline");
-			$("#peopleContainer").css("display", "inline");
+			$('#startMenu').addClass('hidden');
+			$('#menu').removeClass('hidden');
+			$('#capital').removeClass('hidden');
+			
 		}
 		numOfClicks+=numOfWorkers;
-		updateClicks(numOfClicks);
-	} else if ($("#" + event.target.id).hasClass('farmer')){
-		var food = fetchFood();
-		food+=numOfFarmers;
-		updateFood(food);
-	} else if ($('#' + event.target.id).hasClass('lumberjack')){
-		var wood = fetchWood();
-		wood+=fetchNumOfLumberjacks();
-		updateWood(wood);
+		update('Clicks', numOfClicks);
+	} else {
+		var clickers;
+		switch (event.target.id){
+			case 'farm':
+				clickers = 'Farmers';
+				break;
+			case 'chop':
+				clickesr ='Lumberjacks';
+				break;
+			case 'cutStone':
+				clickers ='StoneCutters';
+				break;
+		}		
+		var resourceType = fetchRelevantResources(clickers);
+		resourceType = resourceType.charAt(0).toUpperCase() + resourceType.slice(1);
+		var numOfResources = fetch(resourceType);
+		var numOfClickers = fetch(clickers);
+		numOfResources+=numOfClickers;
+		console.log(numOfResources + ' ' +  resourceType);
+		update(resourceType, numOfResources);
 	}
-	if (fetch_random_num(1, chanceToCreateNewPerson)<=floorChance){
+	if (fetchRandomNum(1, chanceToCreateNewPerson)<=floorChance){
 		numOfWorkers++;
 		numOfPeople++;
-		updateWorkers(numOfWorkers);
-		updatePeople(numOfPeople);
-		$(".hire").css("display", "inline");	
+		updateClickers('Workers', numOfWorkers);
+		update('People', numOfPeople);
+		$('.hire').removeClass('hidden');
 		clickCounter=0;
 	}
 	refreshJobs();
@@ -53,53 +79,48 @@ $(document).on ("click", ".clicker", function(event){
 });
 
 $(document).on ("click", ".hire", function(event){
-	var numOfWorkers = fetchNumOfWorkers();
+	var numOfWorkers = fetch('Workers');
 	if (numOfWorkers==0){
 		return;
 	}
 	numOfWorkers--;
-	if (event.target.id == "addFarmer"){
-		var numOfFarmers = fetchNumOfFarmers();
-		numOfFarmers++;
-		updateFarmers(numOfFarmers);
-		$("#farm").css("display", "inline");
-		clearBlinkingButtons();
-		blinkButton("#farm");
-	} else if (event.target.id=='addLumberjack'){
-		var numOfLumberjacks = fetchNumOfLumberjacks();		
-		numOfLumberjacks++;
-		if (numOfLumberjacks=>1){
-			$('#woodCaption').css('display', 'inline');
-		}
-		updateLumberjacks(numOfLumberjacks);
-		$('#chop').css('display', 'inline');
-		clearBlinkingButtons();
-		blinkButton("#chop");
-
-	} else if (event.target.id == 'addOverseer'){
-		var numOfOverseers = fetchNumOfOverseers();
+	if (event.target.id == 'addOverseer'){
+		var numOfOverseers = fetch('Overseers');
 		numOfOverseers++;
-		updateOverseers(numOfOverseers);
+		update('Overseers', numOfOverseers);
 		
+	} else {
+		var typeOfClicker = event.target.id.substr(3) + 's';
+		var numOfThisClicker = fetch(typeOfClicker);
+		numOfThisClicker++;
+		updateClickers(typeOfClicker, numOfThisClicker);
+		if (numOfThisClicker>0){
+			var capital = fetchRelevantResources(typeOfClicker);
+			$('#' + capital + 'Caption').removeClass('hidden');
+		}
 	}
-	updateWorkers(numOfWorkers);
+	updateClickers('Workers', numOfWorkers);
 	refreshJobs();
 });
 $(document).on ("click", ".overseer", function(event){
-	var numOfOverseers = fetchNumOfOverseers();
+	var numOfOverseers = fetch('Overseers');
 	if (numOfOverseers<1){
 		return;
 	}
 	numOfOverseers--;
-	updateOverseers(numOfOverseers);
+	update('Overseers', numOfOverseers);
 	if (event.target.id=='overseeFarm'){
-		var numOfFarmOverseers = fetchNumOfFarmOverseers();
+		var numOfFarmOverseers = fetch('FarmOverseers');
 		numOfFarmOverseers++;	
-		updateFarmOverseers(numOfFarmOverseers);
+		update('FarmOverseers', numOfFarmOverseers);
 	} else if (event.target.id=='overseeForest'){
-		var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
+		var numOfLumberjackOverseers = fetch('LumberjackOverseers');
 		numOfLumberjackOverseers++;
-		updateLumberjackOverseers(numOfLumberjackOverseers);	
+		update('LumberjackOverseers', numOfLumberjackOverseers);	
+	} else if (event.target.id=='overseeQuarry'){
+		var numOfStoneCutterOverseers = fetch('StoneCutterOverseers');
+		numOfStoneCutterOverseers++;
+		update('StoneCutterOverseers', numOfStoneCutterOverseers);	
 	}
 	refreshJobs();
 	
@@ -123,45 +144,36 @@ function clearBlinkingButtons(){
 		stopBlinkingButton('#' + button.id);
 	});
 }
-function fetch_random_num (floor, ceiling){
+function fetchRandomNum (floor, ceiling){
 	return Math.floor(Math.random() * ceiling) + floor;
 }
-function fetchFood(){
-	return Number($("#numOfFood").html());	
+function fetch(what){
+	return Number($('#numOf' + what).html());	
 }
-function fetchNumOfClicks(){
-	return Number($("#numOfClicks").html());	
-}
-function fetchNumOfFarmers(){
-	return Number($("#numOfFarmers").html());
-}
-function fetchNumOfOverseers(){
-	return Number($("#numOfOverseers").html());
-}
-function fetchNumOfFarmOverseers(){
-	return Number($("#numOfFarmOverseers").html());
-}
-function fetchNumOfLumberjackOverseers(){
-	return Number($('#numOfLumberjackOverseers').html());
-}
-function fetchNumOfLumberjacks(){
-	return Number($("#numOfLumberjacks").html());
-}
-function fetchNumOfPeople(){
-	return Number($("#numOfPeople").html());
-}
-function fetchNumOfWorkers (){
-	return Number($("#numOfWorkers").html());
-}
-function fetchWood (){
-	return Number($("#numOfWood").html());
+function fetchRelevantResources(clicker){
+	switch(clicker){
+		case 'Farmers':
+			capital = 'food';
+			break;
+		case 'Lumberjacks':
+			capital='wood';
+			break;
+		case 'StoneCutters':
+			capital='stone';
+			break;
+		case 'Workers':
+			capital='clicks';
+			break;
+	
+	}
+	return capital;
 }
 function feedWorkers (){
-	var food = fetchFood();
-	var numOfWorkers = fetchNumOfWorkers();
-	var numOfFarmers = fetchNumOfFarmers();
-	var numOfOverseers = fetchNumOfOverseers();
-	var numOfPeople = fetchNumOfPeople();
+	var food = fetch('Food');
+	var numOfWorkers = fetch('Workers');
+	var numOfFarmers = fetch('Farmers');
+	var numOfOverseers = fetch('Overseers');
+	var numOfPeople = fetch('People');
 	if (food < numOfPeople){
 		var foodDeficit=numOfPeople-food;
 		numOfPeople-=foodDeficit;
@@ -185,8 +197,8 @@ function feedWorkers (){
 
 		}
 		if (numOfPeople<1){
-			var numOfClicks=fetchNumOfClicks(); 
-			updateClicks(Math.floor(numOfClicks/2));
+			var numOfClicks=fetch('Clicks'); 
+			update('Clicks', Math.floor(numOfClicks/2));
 			if (numOfClicks==0){
 				stopTimer();
 			}
@@ -199,27 +211,28 @@ function feedWorkers (){
 	} else {
 		food-=numOfPeople;
 	}
-	updateFarmers(numOfFarmers);
-	updateFood(food);
-	updateOverseers(numOfOverseers);
-	updatePeople(numOfPeople);
-	updateWorkers(numOfWorkers);
+	updateClickers('Farmers', numOfFarmers);
+	update('Food', food);
+	update('Overseers', numOfOverseers);
+	update('People', numOfPeople);
+	updateClickers('Workers', numOfWorkers);
 	refreshJobs();
 	
 }
 function flashUI(selector){
-	$(selector).css('display', 'inline');
+	$(selector).removeClass('hidden');
 	clearTimeout(flashingUI);
 	flashingUI = setTimeout(function(){
-		$(selector).css('display', 'none');
+		$(selector).addClass('hidden');
 	}, 500);
 }
 function overseeWork(){
-	var numOfFarmOverseers = fetchNumOfFarmOverseers();
-	var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
+	var numOfFarmOverseers = fetch('FarmOverseers');
+	var numOfLumberjackOverseers = fetch('LumberjackOverseers');
+	var numOfStoneCutterOverseers = fetch('StoneCutterOverseers');
 	if (numOfFarmOverseers>0){
-		var numOfFarmers = fetchNumOfFarmers();
-		var food = fetchFood();
+		var numOfFarmers = fetch('Farmers');
+		var food = fetch('Food');
 		var foodProduction = numOfFarmers * (1- (.1/numOfFarmOverseers));
 		var foodDelta = Math.trunc (foodProduction);
 		food+=foodDelta;
@@ -229,11 +242,11 @@ function overseeWork(){
 				food++;
 			}
 		}
-		updateFood(food);
+		update('Food', food);
 	}
 	if (numOfLumberjackOverseers>0){
-		var numOfLumberjacks = fetchNumOfLumberjacks();
-		var wood = fetchWood();
+		var numOfLumberjacks = fetch('Lumberjacks');
+		var wood = fetch('Wood');
 		var woodProduction = numOfLumberjacks * (1- (.1/numOfLumberjackOverseers));
 		var woodDelta = Math.trunc (woodProduction);
 		wood+=woodDelta;
@@ -243,72 +256,95 @@ function overseeWork(){
 				wood++;
 			}
 		}
-		updateWood(wood);
+		update('Wood', wood);
+	}
+	if (numOfStoneCutterOverseers>0){
+		var numOfStoneCutters = fetch('StoneCutters');
+		var stone = fetch('Stone');
+		var stoneProduction = numOfStoneCutters * (1- (.1/numOfStoneCutterOverseers));
+		var stoneDelta = Math.trunc (stoneProduction);
+		stone+=stoneDelta;
+		stoneDelta=stoneProduction-stoneDelta;
+		if (stoneDelta<1){
+			if(Math.random() * 1 <= stoneDelta){
+				stone++;
+			}
+		}
+		update('Stone', stone);
 	}
 }
 function refreshJobs(){
-	var numOfWorkers = fetchNumOfWorkers();
-	var food = fetchFood();
-	var numOfClicks = fetchNumOfClicks();
-	var numOfFarmers = fetchNumOfFarmers();
-	var numOfLumberjacks = fetchNumOfLumberjacks();
-	var numOfOverseers = fetchNumOfOverseers();
-	var numOfFarmOverseers = fetchNumOfFarmOverseers();
-	var numOfLumberjackOverseers = fetchNumOfLumberjackOverseers();
-	var numOfPeople = fetchNumOfPeople();
+	var numOfWorkers = fetch('Workers');
+	var food = fetch('Food');
+	var numOfClicks = fetch('Clicks');
+	var numOfFarmers = fetch('Farmers');
+	var numOfLumberjacks = fetch('Lumberjacks');
+	var numOfOverseers = fetch('Overseers');
+	var numOfFarmOverseers = fetch('FarmOverseers');
+	var numOfLumberjackOverseers = fetch('LumberjackOverseers');
+	var numOfStoneCutterOverseers = fetch('StoneCutterOverseers');
+	var numOfPeople = fetch('People');
+	var numOfStoneCutters = fetch('StoneCutters');
 	if (numOfWorkers<2){
-		$(".hire").css("display", "none");
+		$('.hire').addClass('hidden');
 		if (numOfOverseers==0){
-			$("#overseerCaption").css('display', 'none');
+			$("#overseerCaption").addClass('hidden');
 		}
 		if (numOfClicks==0 && food==0 && numOfFarmers==0){
-			$("#farmerCaption").css('display', 'none');
-			$("#foodCaption").css("display", 'none');
+			$("#farmerCaption").addClass('hidden');
+			$("#foodCaption").addClass('hidden');
 			stopTimer();
 		}
-		
 	} else if (numOfWorkers>1){
-		$("#farmerCaption").css("display", "inline");
-		$("#lumberjackCaption").css('display', 'inline');
-		$("#foodCaption").css("display", "inline");
+		$('.otherWorkers').removeClass('hidden');
+		$(".hire").removeClass('hidden');
 		if (food>0 || numOfFarmers>0){
-			$("#overseerCaption").css("display", "inline");
+			$("#overseerCaption").removeClass('hidden');
 		}else {
+			$("#overseerCaption").addClass('hidden');
 			clearBlinkingButtons();
 			blinkButton('#addFarmer');
 		}
 		
 	}
-	if (numOfFarmers==0){
-		$("#farm").css('display', 'none');
+	console.log('farmers!');
+	if (numOfFarmers==0 && !$('#farm').hasClass('hidden')){
+		$("#farm").addClass('hidden');
 	} else {
 		if (food<numOfPeople){
 			blinkButton("#farm");
 		} else {
 			stopBlinkingButton('#farm');
 		}
-		$("#farm").css('display', 'inline');
+		$("#farm").removeClass('hidden');
 	}
 	if (numOfOverseers<1){
-		$(".overseer").css('display', 'none');
+		$(".overseer").addClass('hidden');
 	} else if (numOfOverseers>0){
 		if (numOfFarmers>0){
-			$('#overseeFarm').css('display', 'inline');
+			$('#overseeFarm').removeClass('hidden');
 		} 
-		console.log(numOfLumberjacks);
 		if (numOfLumberjacks>0){
-			$('#overseeForest').css('display', 'inline');
+			$('#overseeForest').removeClass('hidden');
+		}
+		if (numOfStoneCutters>0){
+			$('#overseeQuarry').removeClass('hidden');
 		}
 	}
 	if (numOfFarmOverseers>0){
-		$("#farmOverseerCaption").css('display', 'inline');	
+		$("#farmOverseerCaption").removeClass('hidden');	
 	} else {
-		$("#farmOverseerCaption").css('display', 'none');	
+		$("#farmOverseerCaption").addClass('hidden');	
 	}
 	if (numOfLumberjackOverseers>0){
-		$("#lumberjackOverseerCaption").css('display', 'inline');	
+		$("#lumberjackOverseerCaption").removeClass('hidden');	
 	} else {
-		$("#lumberjackOverseerCaption").css('display', 'none');	
+		$("#lumberjackOverseerCaption").addClass('hidden');	
+	}
+	if (numOfStoneCutterOverseers>0){
+		$("#stoneCutterOverseerCaption").removeClass('hidden');	
+	} else {
+		$("#stoneCutterOverseerCaption").addClass('hidden');	
 	}
 }
 function startTimer (){
@@ -338,7 +374,7 @@ function startTimer (){
 		if (seconds<10){
 			seconds= "0" + seconds;
 		}
-		if (seconds<=10 && fetchFood()<=fetchNumOfPeople()){
+		if (seconds<=10 && fetch('Food')<fetch('People')){
 			blink ("#timeRemaining", "red");
 			blink ("#numOfFood", "red");
 		}
@@ -351,38 +387,27 @@ function stopTimer(){
 	$("#timeCaption").css("display", "none");
 	clearInterval(timer);
 }
-function updateClicks(n){
-	$("#numOfClicks").html(n);	
+function update(what, n){
+	$('#numOf' + what).html(n);
 }
-function updateFarmers(n){
-	$("#numOfFarmers").html(n);
-	$("#farm").val("+" + n);
-}
-function updateFood(n){
-	$("#numOfFood").html(n);
-}
-function updateLumberjacks(n){
-	$('#numOfLumberjacks').html(n);
-	$('#chop').val('+' + n);
-}
-function updateOverseers(n){
-	$("#numOfOverseers").html(n);
-}
-function updateFarmOverseers(n){
-	$("#numOfFarmOverseers").html(n);
-}
-function updateLumberjackOverseers(n){
-	$('#numOfLumberjackOverseers').html(n);
-}
-function updatePeople(n){
-	$("#numOfPeople").html(n);
-}
-function updateWood(n){
-	$("#numOfWood").html(n);
-}
-function updateWorkers(n){
-	$("#numOfWorkers").html(n);
-	$("#work").val("+" + n);
+function updateClickers(clickers, n){
+	var clickerButtonID;
+	switch (clickers){
+		case 'Farmers':
+			clickerButtonID = 'farm';
+			break;
+		case 'Lumberjacks':
+			clickerButtonID='chop';
+			break;
+		case 'StoneCutters':
+			clickerButtonID='cutStone';
+			break;
+		case 'Workers':
+			clickerButtonID='work';
+			break;
+	}
+	$('#numOf' + clickers).html(n);
+	$('#' + clickerButtonID).val("+" + n);
 }
 
 setInterval(function(){
