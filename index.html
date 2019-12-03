@@ -1,6 +1,12 @@
 <html>
 	<head>
 	<style>
+	#campfire.on{
+	  color: green;
+	}
+	#campfire{
+	  color: red;
+	}
 	.clicker {
  		 touch-action: manipulation;
 	}	
@@ -33,7 +39,7 @@
 	<body>
 		<div id='startMenu'>
 			Clicks:0
-			<input id='start' class='worker clicker blinking' type='button' 
+			<input id='start' class='worker clicker' type='button' 
 			value='+1'>
 	</div><div id='menu' class='hidden'>
 		<ul class="nav nav-tabs">
@@ -57,10 +63,11 @@
 		<span id='newPopCentCaption' class=''>
 			(<span id='newPopCent'>0</span>%)
 		</span>
+		<input id='campfire' type='button' class='hidden' value='Campfire'>
 		<input type='hidden' id='clickCounter' value='0'>
 		<div id='clicksCaption' >
 			Clicks:<span id='numOfClicks'>0</span>
-			<input id='work' class='worker clicker blinking' type='button' 
+			<input id='work' class='worker clicker' type='button' 
 			value='+1'>
 		</div><div id="foodCaption" class='hidden'>
 			Food:
@@ -84,6 +91,7 @@
 			value='+0'>
 		</div>
 	</div><div id='labor' class='hidden'>
+		<input type='hidden' id='campfireFloorChance' value='0'> 
 		<div id='workerCaption'>
 			Workers:
 			<span id='numOfWorkers'>1</span>
@@ -93,7 +101,7 @@
 			<input type='button' id='addFarmer' 
 			class='hire ' value='+'>
 			<span id='farmOverseerCaption' class='hidden'>
-				[<span id='numOfFarmOverseers'>0</span>]
+				[<span id='numOfFarmerOverseers'>0</span>]
 			</span>
 			<input type='button' id='overseeFarm'
 		        class='overseer ' value='&#8734'>
