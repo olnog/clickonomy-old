@@ -1,4 +1,3 @@
-var chanceToCreateNewPerson = fetch('People')*4;
 var flashingUI;
 var timer;
 
@@ -20,6 +19,7 @@ $(document).on ('click', '#laborMenuButton', function(event){
 $(document).on ("click", ".clicker", function(event){
 	
 	updateClickCounter(fetchClickCounter()+1);
+	var chanceToCreateNewPerson = fetchChanceToCreateNewPerson();
 	var floorChance = fetchFloorChance();
 	var numOfWorkers = fetch('Workers');
 	var numOfFarmers = fetch('Farmers');
@@ -58,7 +58,7 @@ $(document).on ("click", ".clicker", function(event){
 			$('#campfire').removeClass('hidden');	
 		}
 	}
-	if (fetchRandomNum(1, chanceToCreateNewPerson)<=floorChance){
+	if (fetchRandomNum(1, chanceToCreateNewPerson-fetchCampfireFloorChance())<=floorChance){
 		updateCampfireFloorChance(0);
 		numOfWorkers++;
 		numOfPeople++;
@@ -123,9 +123,9 @@ function automate(){
 	var listOfJobs = ['Farmer', 'StoneCutter', 'Lumberjack'];
 	if (campfireBurning){
 		var wood = fetch ('Wood');
-		var numOfLumberjacks = fetch('Lumberjacks');
-		if (wood>0 && wood>=numOfLumberjacks){
-			wood-=numOfLumberjacks;
+		var numOfPeople = fetch('People');
+		if (wood>0 && wood>=numOfPeople){
+			wood-=numOfPeople;
 			update('Wood', wood);
 			var campfireFloorChance = fetchCampfireFloorChance();
 			updateCampfireFloorChance(campfireFloorChance+1);
@@ -175,16 +175,19 @@ function fetch(what){
 function fetchCampfireFloorChance(){
 	return Number($('#campfireFloorChance').val());
 }
+function fetchChanceToCreateNewPerson (){
+	return fetch('People')*4;
+}
 function fetchClickCounter(){
 	return Number($('#clickCounter').val());
 }
 function fetchFloorChance(){
 	var campfireFloorChance = fetchCampfireFloorChance();
 	var clickCounter = fetchClickCounter();
-	var floorChance = campfireFloorChance;
+	var floorChance = 0;
 	var numOfPeople = fetch('People');
 	if (clickCounter>=numOfPeople){
-		 floorChance= (clickCounter-numOfPeople)+campfireFloorChance;
+		 floorChance= (clickCounter-numOfPeople);
 	}
 	return floorChance;
 }
@@ -422,17 +425,15 @@ function updateClickCounter(n){
 	$('#clickCounter').val(n);
 }
 function updateNewPopProgress(){
-	var campfireFloorChance = fetchCampfireFloorChance();
+	var chanceToCreateNewPerson = fetchChanceToCreateNewPerson();
+	var campfireFloorChance = fetchCampfireFloorChance()*.01;
 	var clickCounter = fetchClickCounter();
 	var floorChance = fetchFloorChance()*.01;
-	var newPopCent =  (clickCounter / chanceToCreateNewPerson)+floorChance;
+	var newPopCent =  (clickCounter / chanceToCreateNewPerson)+floorChance+campfireFloorChance;
 	if (newPopCent<1 && newPopCent>0){
 		newPopCent = String(newPopCent).substr(2, 2);	
 	} else if (newPopCent>=1){
 		newPopCent = 99;	
-	}
-	if (String(newPopCent).length==1 && newPopCent!=0){
-		newPopCent = newPopCent + "0";
 	}
 	$('#newPopProgress').val(newPopCent);
 	$('#newPopCent').html(newPopCent);
