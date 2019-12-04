@@ -53,10 +53,10 @@ $(document).on ("click", ".clicker", function(event){
 		var numOfClickers = fetch(clickers);
 		numOfResources+=numOfClickers;
 		update(resourceType, numOfResources);
-		if (event.target.id=='chop' && $('#campfire').hasClass('hidden')
-		&& fetch('Wood')>=fetch('Lumberjacks')){
-			$('#campfire').removeClass('hidden');	
-		}
+	}
+	if (event.target.id=='chop' && $('#campfire').hasClass('hidden')
+	&& fetch('Wood')>=fetch('Lumberjacks')){
+		revealCampfire();
 	}
 	if (fetchRandomNum(1, chanceToCreateNewPerson-fetchCampfireFloorChance())<=floorChance){
 		updateCampfireFloorChance(0);
@@ -152,6 +152,9 @@ function automate(){
 				}
 			}
 			update(resourceType, numOfResources);
+			if (resourceType=='Wood' && numOfResources>=fetch('People')){
+				revealCampfire();
+			}
 		}
 	});
 }
@@ -346,6 +349,9 @@ function refreshJobs(){
 		$("#stoneCutterOverseerCaption").addClass('hidden');	
 	}
 }
+function revealCampfire(){
+	$('#campfire').removeClass('hidden');	
+}
 function startTimer (){
 	var startingSeconds = 30;
 	var startingMinutes = 0;
@@ -434,6 +440,9 @@ function updateNewPopProgress(){
 		newPopCent = String(newPopCent).substr(2, 2);	
 	} else if (newPopCent>=1){
 		newPopCent = 99;	
+	}
+	if (String(newPopCent).substr(0, 1)=='0' && String(newPopCent).length>1){
+		newPopCent = String(newPopCent).substr(1);
 	}
 	$('#newPopProgress').val(newPopCent);
 	$('#newPopCent').html(newPopCent);
