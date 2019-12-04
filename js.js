@@ -479,7 +479,6 @@ function stopTimer(){
 	clearInterval(timer);
 }
 function update(what, n){
-	console.log(what + ' ' + n);
 	$('#numOf' + what).html(n);
 }
 function updateCampfire(){
@@ -540,11 +539,16 @@ function updateNewPopProgress(){
 function useTools(clickers){
 	var toolType = fetchRelevantToolType(clickers);
 	var numOfTools = fetch(toolType);
+	var numOfRelevantTools = numOfTools;
+	var numOfClickers = fetch(clickers);
+	if (numOfClickers<numOfTools){
+		numOfRelevantTools=numOfClickers;
+	}
 	if (numOfTools==0){
 		return;
 	}
 	var numOfDestroyedTools=0;
-	for (var i=0; i<numOfTools; i++){
+	for (var i=0; i<numOfRelevantTools; i++){
 		var randNum = fetchRandomNum(1, 10);
 		if (randNum==1){
 			numOfDestroyedTools++;
