@@ -24,7 +24,10 @@ $(document).on ("click", ".clicker", function(event){
 	var numOfWorkers = fetch('Workers');
 	var numOfFarmers = fetch('Farmers');
 	var numOfPeople = fetch('People');
-	if (event.target.id == 'work' || event.target.id=='start'){
+	if ($('#' + event.target.id).hasClass('makeStoneTool')){
+		var typeOfTool = event.target.id.substr(4) + 's';
+		createStoneTool(typeOfTool);
+	} else if (event.target.id == 'work' || event.target.id=='start'){
 		var numOfClicks = fetch('Clicks');
 		if (numOfClicks==0){
 			timer = startTimer();
@@ -51,7 +54,15 @@ $(document).on ("click", ".clicker", function(event){
 		var resourceType = fetchRelevantResources(clickers, 1);
 		var numOfResources = fetch(resourceType);
 		var numOfClickers = fetch(clickers);
-		numOfResources+=numOfClickers;
+		var numOfTools = fetchNumOfRelevantTools(clickers);
+		useTools(clickers);
+		numOfResources+=numOfClickers+numOfTools;
+		if (resourceType=='Food'){
+			checkFoodLimit(numOfResources, numOfClickers);
+		} else if (numOfResources>0 && ((resourceType=='Stone'  && fetch('Wood')>0)
+		|| (resourceType=='Wood' && fetch('Stone')>0))){
+			$('.makeStoneTool').removeClass('hidden');
+		}
 		update(resourceType, numOfResources);
 	}
 	if (event.target.id=='chop' && $('#campfire').hasClass('hidden')
@@ -142,8 +153,14 @@ function automate(){
 			var numOfClickers = fetch(job);
 			var resourceType = fetchRelevantResources(job, 1);
 			var numOfResources = fetch(resourceType);
+			var numOfTools = fetchNumOfRelevantTools(job);
 			var resourceProduction = numOfClickers * (1- (.1/numOfJobOverseers));
+			if (numOfTools>0){
+				resourceProduction = resourceProduction>numOfTools 
+				? resourceProduction*2 : resourceProduction + numOfTools;
+			}
 			var resourceDelta = Math.trunc (resourceProduction);
+			useTools(job);
 			numOfResources+=resourceDelta;
 			resourceDelta=resourceProduction-resourceDelta;
 			if (resourceDelta<1){
@@ -151,10 +168,16 @@ function automate(){
 					numOfResources++;
 				}
 			}
-			update(resourceType, numOfResources);
 			if (resourceType=='Wood' && numOfResources>=fetch('People')){
 				revealCampfire();
+			} else if (resourceType=='Food'){
+				numOfResources=checkFoodLimit(numOfResources, numOfClickers);
+			} else if (numOfResources>0 && ((resourceType=='Stone'  && fetch('Wood')>0)
+			|| (resourceType=='Wood' && fetch('Stone')>0))){
+				$('.makeStoneTool').removeClass('hidden');
 			}
+
+			update(resourceType, numOfResources);
 		}
 	});
 }
@@ -164,13 +187,95 @@ function blink(selector, color){
 		$(selector).css("color", "black");
 	}, 500);
 }
+/*
 function blinkButton(selector){
-	$(selector).addClass('blinking');
+	//$(selector).addClass('blinking');
 }
 function clearBlinkingButtons(){
 	$('.blinking').each (function (i, button){
 		stopBlinkingButton('#' + button.id);
 	});
+}
+*/
+function checkFoodLimit(numOfResources, numOfClickers){
+	var foodLimit = fetchFoodLimit();
+	if (numOfResources==foodLimit){
+		$('#farm').addClass('hidden');
+		return;
+	} else if (numOfResources + numOfClickers>=foodLimit){
+		$('#farm').addClass('hidden');
+		return foodLimit;
+	}
+	return numOfResources;
+}
+function createStoneTool(toolType){
+	var numOfTools = fetch(toolType)
+	var numOfToolmakers = fetch('Toolmakers');
+	var stone = fetch ('Stone');
+	var wood = fetch('Wood');
+	var toolDelta=numOfToolmakers;
+	if (wood<numOfToolmakers && stone<numOfToolmakers){
+		if (wood==0 || stone==0){
+			$('.makeStoneTool').addClass('hidden');
+			return;
+		}
+		toolDelta = wood>stone ? stone : wood;
+	} 
+	if (wood-toolDelta<=0 || stone-toolDelta<=0){
+			$('.makeStoneTool').addClass('hidden');
+	}
+	update('Wood', wood - toolDelta);
+	update('Stone', stone - toolDelta);
+	update(toolType, numOfTools+toolDelta);
+}
+function everyoneStarves(){
+	var foodDeficit=numOfPeople-food;
+	var numOfPeople = fetch('People');
+	numOfPeople-=foodDeficit;
+	if (numOfOverseers>0){
+		while (foodDeficit>0 && numOfOverseers>0){
+			numOfOverseers--;
+			foodDeficit--;
+		}
+	}
+	if (numOfFarmers>0){
+		while (foodDeficit>0 && numOfFarmers>0){
+			numOfFarmers--;
+			foodDeficit--;
+		}
+	}
+	if (numOfWorkers>1){
+		while (foodDeficit>0 && numOfWorkers>1){
+			numOfWorkers--;
+			foodDeficit--;
+		}
+
+	}
+	if (numOfPeople<1){
+		var numOfClicks=fetch('Clicks'); 
+		update('Clicks', Math.floor(numOfClicks/2));
+		if (numOfClicks==0){
+			stopTimer();
+		}
+		numOfPeople=1;
+	}
+	if (numOfWorkers==1 && $("#addFarmer").css("display")!="none"){
+		$("#addFarmer").css("display", "none");
+	}
+	updateClickers ('People', numOfPeople);
+}
+function feedPeople (){
+	var food = fetch('Food');
+	var numOfPeople = fetch('People');
+	if (food < numOfPeople){
+		//everyoneStarves();
+		food=0;
+	} else {
+		food-=numOfPeople;
+	}
+	update('Food', food);
+	refreshJobs();
+	
 }
 function fetch(what){
 	return Number($('#numOf' + what).html());	
@@ -179,7 +284,7 @@ function fetchCampfireFloorChance(){
 	return Number($('#campfireFloorChance').val());
 }
 function fetchChanceToCreateNewPerson (){
-	return fetch('People')*4;
+	return fetch('People')*2;
 }
 function fetchClickCounter(){
 	return Number($('#clickCounter').val());
@@ -193,6 +298,15 @@ function fetchFloorChance(){
 		 floorChance= (clickCounter-numOfPeople);
 	}
 	return floorChance;
+}
+function fetchFoodLimit(){
+	return Number($('#foodLimit').html());
+}
+function fetchNumOfRelevantTools(clickers){
+	var toolType = fetchRelevantToolType(clickers );
+	var numOfTools = fetch(toolType);
+	var numOfClickers = fetch(clickers);
+	return numOfTools>=numOfClickers ? numOfClickers : numOfTools;
 }
 function fetchRandomNum (floor, ceiling){
 	return Math.floor(Math.random() * ceiling) + floor;
@@ -208,6 +322,9 @@ function fetchRelevantResources(clicker, firstUC){
 		case 'StoneCutters':
 			capital='stone';
 			break;
+		case 'Toolmakers':
+			capital='tools';
+			break;
 		case 'Workers':
 			capital='clicks';
 			break;
@@ -215,57 +332,22 @@ function fetchRelevantResources(clicker, firstUC){
 	}
 	return firstUC ? capital.charAt(0).toUpperCase() + capital.slice(1) : capital;
 }
-function feedWorkers (){
-	var food = fetch('Food');
-	var numOfWorkers = fetch('Workers');
-	var numOfFarmers = fetch('Farmers');
-	var numOfOverseers = fetch('Overseers');
-	var numOfPeople = fetch('People');
-	if (food < numOfPeople){
-		var foodDeficit=numOfPeople-food;
-		numOfPeople-=foodDeficit;
-		if (numOfOverseers>0){
-			while (foodDeficit>0 && numOfOverseers>0){
-				numOfOverseers--;
-				foodDeficit--;
-			}
-		}
-		if (numOfFarmers>0){
-			while (foodDeficit>0 && numOfFarmers>0){
-				numOfFarmers--;
-				foodDeficit--;
-			}
-		}
-		if (numOfWorkers>1){
-			while (foodDeficit>0 && numOfWorkers>1){
-				numOfWorkers--;
-				foodDeficit--;
-			}
-
-		}
-		if (numOfPeople<1){
-			var numOfClicks=fetch('Clicks'); 
-			update('Clicks', Math.floor(numOfClicks/2));
-			if (numOfClicks==0){
-				stopTimer();
-			}
-			numOfPeople=1;
-		}
-		if (numOfWorkers==1 && $("#addFarmer").css("display")!="none"){
-			$("#addFarmer").css("display", "none");
-		}
-		food=0;
-	} else {
-		food-=numOfPeople;
+function fetchRelevantToolType(clickers){
+	var toolType;
+	switch(clickers){
+		case 'Farmers':
+			toolType='StoneHoes';
+			break;
+		case 'Lumberjacks':
+			toolType='StoneAxes';
+			break;
+		case 'StoneCutters':
+			toolType='StonePickAxes';
+			break;
 	}
-	updateClickers('Farmers', numOfFarmers);
-	update('Food', food);
-	update('Overseers', numOfOverseers);
-	update('People', numOfPeople);
-	updateClickers('Workers', numOfWorkers);
-	refreshJobs();
-	
+	return toolType;
 }
+/*
 function flashUI(selector){
 	$(selector).removeClass('hidden');
 	clearTimeout(flashingUI);
@@ -273,6 +355,7 @@ function flashUI(selector){
 		$(selector).addClass('hidden');
 	}, 500);
 }
+*/
 function isCampfireBurning(){
 	return $('#campfire').hasClass('on');
 }
@@ -305,19 +388,14 @@ function refreshJobs(){
 			$("#overseerCaption").removeClass('hidden');
 		}else {
 			$("#overseerCaption").addClass('hidden');
-			clearBlinkingButtons();
-			blinkButton('#addFarmer');
+			//clearBlinkingButtons();
+			//blinkButton('#addFarmer');
 		}
 		
 	}
-	if (numOfFarmers==0 && !$('#farm').hasClass('hidden')){
+	if (numOfFarmers==0 || (numOfFarmers>0 && food==fetchFoodLimit())){
 		$("#farm").addClass('hidden');
 	} else {
-		if (food<numOfPeople){
-			blinkButton("#farm");
-		} else {
-			stopBlinkingButton('#farm');
-		}
 		$("#farm").removeClass('hidden');
 	}
 	if (numOfOverseers<1){
@@ -368,7 +446,7 @@ function startTimer (){
 			seconds=59;
 			minutes--;
 			if (minutes<0){
-				//feedWorkers();	
+				feedPeople();	
 				minutes=startingMinutes;
 				seconds=startingSeconds;
 	
@@ -389,16 +467,19 @@ function startTimer (){
 		
 	}, 1000);
 }
+/*
 function stopBlinkingButton(selector){
 	$(selector).css('font-weight', 'normal');
 	$(selector).removeClass('blinking');
 
 }
+*/
 function stopTimer(){
 	$("#timeCaption").css("display", "none");
 	clearInterval(timer);
 }
 function update(what, n){
+	console.log(what + ' ' + n);
 	$('#numOf' + what).html(n);
 }
 function updateCampfire(){
@@ -421,6 +502,10 @@ function updateClickers(clickers, n){
 			break;
 	}
 	$('#numOf' + clickers).html(n);
+	if (clickers=='Toolmakers'){
+		$('.makeStoneTool').val('+' + n);
+		return;
+	}
 	$('#' + clickerButtonID).val("+" + n);
 }
 
@@ -429,6 +514,10 @@ function updateCampfireFloorChance(n){
 }
 function updateClickCounter(n){
 	$('#clickCounter').val(n);
+}
+function updateFoodLimit(n){
+	$('#foodLimit').html(n);
+	
 }
 function updateNewPopProgress(){
 	var chanceToCreateNewPerson = fetchChanceToCreateNewPerson();
@@ -448,9 +537,26 @@ function updateNewPopProgress(){
 	$('#newPopCent').html(newPopCent);
 
 }
+function useTools(clickers){
+	var toolType = fetchRelevantToolType(clickers);
+	var numOfTools = fetch(toolType);
+	if (numOfTools==0){
+		return;
+	}
+	var numOfDestroyedTools=0;
+	for (var i=0; i<numOfTools; i++){
+		var randNum = fetchRandomNum(1, 10);
+		if (randNum==1){
+			numOfDestroyedTools++;
+		}
+	}
+	update(toolType, numOfTools-numOfDestroyedTools);
+}
 setInterval(function(){
+	/*
 	$(".blinking").css('font-weight', 'bold');
 	setTimeout(function(){
 		$('.blinking').css('font-weight', 'normal');
 	}, 850);
+	*/
 }, 1700);

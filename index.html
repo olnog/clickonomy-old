@@ -71,7 +71,7 @@
 			value='+1'>
 		</div><div id="foodCaption" class='hidden'>
 			Food:
-			<span id='numOfFood'>0</span>
+			<span id='numOfFood'>0</span>/<span id='foodLimit'>10</span>
 			<input id='farm' class='farmer clicker ' 
 			type='button' 
 			value='+0'>
@@ -89,6 +89,22 @@
 			<input id='cutStone' class='stoneCutter clicker' 
 			type='button' 
 			value='+0'>
+		</div><div id="toolsCaption" class='hidden'>
+			<div>
+				Tools
+			</div><div>
+				Stone Hoes:<span id='numOfStoneHoes'>0</span>
+				<input id='makeStoneHoe' class='makeStoneTool clicker' type='button' 
+	     			value='+0'> 
+			</div><div>
+				Stone Axes:<span id='numOfStoneAxes'>0</span>
+				<input id='makeStoneAxe' class='makeStoneTool clicker' type='button' 
+	     			value='+0'> 
+			</div><div>
+				Stone Pick Axes:<span id='numOfStonePickAxes'>0</span>
+				<input id='makeStonePickAxe' class='makeStoneTool clicker' type='button' 
+	     			value='+0'> 
+			</div>
 		</div>
 	</div><div id='labor' class='hidden'>
 		<input type='hidden' id='campfireFloorChance' value='0'> 
@@ -128,6 +144,10 @@
 			<span id="numOfOverseers">0</span>
 			<input type='button' id='addOverseer' 
 			class='hire ' value='+'>
+		</div><div id='toolmakerCaption' class='otherWorkers'>
+			Toolmaker:
+			<span id='numOfToolmakers'>0</span>
+			<input type='button' id='addToolmaker' class='hire' value='+'>
 		</div>
 	</div>
 
