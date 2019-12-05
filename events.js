@@ -1,41 +1,26 @@
 $(document).on ('click', '#campfire', function(event){
 	updateCampfire();
 });
-$(document).on ('click', '#capitalMenuButton', function(event){
-	$('#capital').removeClass('hidden');
-	$('#labor').addClass('hidden');
-	$('#laborMenuButton').removeClass('active');
-	$('#capitalMenuButton').addClass('active');
+$(document).on ('click', '.nav-link', function(event){
+	menuButtonPressed(event.target.id);
+
 });
-$(document).on ('click', '#laborMenuButton', function(event){
-	$('#labor').removeClass('hidden');
-	$('#capital').addClass('hidden');
-	$('#capitalMenuButton').removeClass('active');
-	$('#laborMenuButton').addClass('active');
-});
-$(document).on('click', '.buildBuilding', function(event){
-	
+
+$(document).on('click', '.buildBuilding', function(event){	
 	if (event.target.id == 'createGranary'){
 		var foodLimit = fetchFoodLimit();
-		var granaryCost = $('#granaryCost').val();
-		var numOfStone = fetch('Stone');
-		
-		if (granaryCost>numOfStone){
+		var granaryCost = fetchBuildingCost('granary');
+		var numOfStone = fetch('Stone');		
+		if (numOfStone<granaryCost){
 			return;
 		}
+		update('Stone', numOfStone-granaryCost);
+		updateBuildingCost('granary', granaryCost*10);
+		updateFoodLimit(foodLimit*10);
 		
-		numOfStone-=granaryCost;
-		granaryCost*=10;
-		foodLimit*=10;
-		update('Stone', numOfStone);
-		$('#granaryCost').val(granaryCost);
-		updateFoodLimit(foodLimit);
-		$('#createGranary').addClass('hidden');
-		if (numOfStone>=granaryCost){
-			$('#createGranary').removeClass('hidden');
-		}
 		
 	}
+	refreshUI();
 });
 $(document).on ("click", ".clicker", function(event){
 	
@@ -46,17 +31,13 @@ $(document).on ("click", ".clicker", function(event){
 	var numOfFarmers = fetch('Farmers');
 	var numOfPeople = fetch('People');
 	if ($('#' + event.target.id).hasClass('makeStoneTool')){
-		var typeOfTool = event.target.id.substr(4) + 's';
+		var typeOfTool = event.target.id.substring(4) + 's';
 		createStoneTool(typeOfTool);
+	} else if ($('#' + event.target.id).hasClass('makeStoneWeapon')){
+		var typeOfWeapon = event.target.id.substring(4) + 's';
+		createWeapon(typeOfWeapon);
 	} else if (event.target.id == 'work' || event.target.id=='start'){
 		var numOfClicks = fetch('Clicks');
-		if (numOfClicks==0){
-			timer = startTimer();
-			$('#startMenu').addClass('hidden');
-			$('#menu').removeClass('hidden');
-			$('#capital').removeClass('hidden');
-			
-		}
 		numOfClicks+=numOfWorkers;
 		update('Clicks', numOfClicks);
 	} else {
@@ -80,22 +61,12 @@ $(document).on ("click", ".clicker", function(event){
 		numOfResources+=numOfClickers+numOfTools;
 		if (resourceType=='Food'){
 			checkFoodLimit(numOfResources, numOfClickers);
-		} else if (resourceType=='Stone'){
-			var granaryCost = $('#granaryCost').val();
-			$('#createGranary').addClass('hidden');
-			if (granaryCost<=numOfResources){
-				$('#createGranary').removeClass('hidden');
-			}
-		}			
-		if (numOfResources>0 && ((resourceType=='Stone'  && fetch('Wood')>0)
-		|| (resourceType=='Wood' && fetch('Stone')>0))){
-			$('.makeStoneTool').removeClass('hidden');
-		}
+		}		
 		update(resourceType, numOfResources);
 	}
 	if (event.target.id=='chop' && $('#campfire').hasClass('hidden')
 	&& fetch('Wood')>=fetch('Lumberjacks')){
-		revealCampfire();
+		reveal('#camfire');
 	}
 	if (numOfPeople<fetchFoodLimit() && fetchRandomNum(1, chanceToCreateNewPerson-fetchCampfireFloorChance())<=floorChance){
 		updateCampfireFloorChance(0);
@@ -103,11 +74,10 @@ $(document).on ("click", ".clicker", function(event){
 		numOfPeople++;
 		updateClickers('Workers', numOfWorkers);
 		update('People', numOfPeople);
-		$('.hire').removeClass('hidden');
 		updateClickCounter(0);
 	}
 	updateNewPopProgress();
-	refreshJobs();
+	refreshUI();
 });
 
 $(document).on ("click", ".hire", function(event){
@@ -116,44 +86,21 @@ $(document).on ("click", ".hire", function(event){
 		return;
 	}
 	numOfWorkers--;
-	if (event.target.id == 'addOverseer'){
-		var numOfOverseers = fetch('Overseers');
-		numOfOverseers++;
-		update('Overseers', numOfOverseers);
-		
-	} else {
-		var typeOfClicker = event.target.id.substr(3) + 's';
-		var numOfThisClicker = fetch(typeOfClicker);
-		numOfThisClicker++;
-		updateClickers(typeOfClicker, numOfThisClicker);
-		if (numOfThisClicker>0){
-			var capital = fetchRelevantResources(typeOfClicker, 0);
-			$('#' + capital + 'Caption').removeClass('hidden');
-		}
-	}
+	var typeOfClicker = event.target.id.substring(3) + 's';
+	var numOfThisClicker = fetch(typeOfClicker);
+	numOfThisClicker++;
+	updateClickers(typeOfClicker, numOfThisClicker);
 	updateClickers('Workers', numOfWorkers);
-	refreshJobs();
+	refreshUI();
 });
 $(document).on ("click", ".overseer", function(event){
-	var numOfOverseers = fetch('Overseers');
-	if (numOfOverseers<1){
+	var numOfWorkers = fetch('Workers');
+	if (numOfWorkers<2){
 		return;
 	}
-	numOfOverseers--;
-	update('Overseers', numOfOverseers);
-	if (event.target.id=='overseeFarm'){
-		var numOfFarmerOverseers = fetch('FarmerOverseers');
-		numOfFarmerOverseers++;	
-		update('FarmerOverseers', numOfFarmerOverseers);
-	} else if (event.target.id=='overseeForest'){
-		var numOfLumberjackOverseers = fetch('LumberjackOverseers');
-		numOfLumberjackOverseers++;
-		update('LumberjackOverseers', numOfLumberjackOverseers);	
-	} else if (event.target.id=='overseeQuarry'){
-		var numOfStoneCutterOverseers = fetch('StoneCutterOverseers');
-		numOfStoneCutterOverseers++;
-		update('StoneCutterOverseers', numOfStoneCutterOverseers);	
-	}
-	refreshJobs();
-	
+	update('Workers', numOfWorkers-1);
+	var typeOfOverseer = event.target.id.substring(7).slice(0, -1) +'Overseers';
+	var numOfOverseer = fetch(typeOfOverseer);
+	update(typeOfOverseer, numOfOverseer+1);
+	refreshUI();
 });

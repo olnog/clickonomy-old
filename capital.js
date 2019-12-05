@@ -1,10 +1,8 @@
 function checkFoodLimit(numOfResources, numOfClickers){
 	var foodLimit = fetchFoodLimit();
 	if (numOfResources==foodLimit){
-		$('#farm').addClass('hidden');
-		return;
-	} else if (numOfResources + numOfClickers>=foodLimit){
-		$('#farm').addClass('hidden');
+		return numOfResources;
+	} else if (numOfResources + numOfClickers>foodLimit){
 		return foodLimit;
 	}
 	return numOfResources;
@@ -17,20 +15,45 @@ function createStoneTool(toolType){
 	var toolDelta=numOfToolmakers;
 	if (wood<numOfToolmakers && stone<numOfToolmakers){
 		if (wood==0 || stone==0){
-			$('.makeStoneTool').addClass('hidden');
 			return;
 		}
 		toolDelta = wood>stone ? stone : wood;
 	} 
-	if (wood-toolDelta<=0 || stone-toolDelta<=0){
-			$('.makeStoneTool').addClass('hidden');
-	}
 	update('Wood', wood - toolDelta);
 	update('Stone', stone - toolDelta);
 	update(toolType, numOfTools+toolDelta);
 }
+function createWeapon(weaponType){
+	var numOfWeapons = fetch(weaponType);
+	var numOfWeaponmakers = fetch('Weaponmakers');
+	var stone = fetch('Stone');
+	var wood = fetch('Wood');
+	var weaponDelta=numOfWeaponmakers;
+	if (wood<numOfWeaponmakers && stone<numOfWeaponmakers){
+		if (wood==0 || stone==0){
+			return;
+		}
+		weaponDelta = wood>stone ? stone : wood;
+	} 
+	update('Wood', wood - weaponDelta);
+	update('Stone', stone - weaponDelta);
+	update(weaponType, numOfWeapons+weaponDelta);
+}
+function destroyResources(){
+	var capitalArr = fetchListOfResources();
+	$.each(capitalArr, function(i, resourceType){
+		var numOfResources = fetch(resourceType);
+		if (numOfResources>0){
+			numOfResources = Math.floor(numOfResources/2);
+			update(resourceType, numOfResources);
+		}
+	});
+}
 function fetchFoodLimit(){
 	return Number($('#foodLimit').html());
+}
+function fetchListOfResources(){
+	return ['Clicks', 'Wood', 'Food', 'Stone', 'StoneSpears', 'StoneAxes', 'StonePickaxes', 'StoneHoes'];
 }
 function fetchNumOfRelevantTools(clickers){
 	var toolType = fetchRelevantToolType(clickers );
@@ -52,6 +75,9 @@ function fetchRelevantResources(clicker, firstUC){
 		case 'Toolmakers':
 			capital='tools';
 			break;
+		case 'Weaponmakers':
+			capital='weapons';
+			break;
 		case 'Workers':
 			capital='clicks';
 			break;
@@ -69,7 +95,7 @@ function fetchRelevantToolType(clickers){
 			toolType='StoneAxes';
 			break;
 		case 'StoneCutters':
-			toolType='StonePickAxes';
+			toolType='StonePickaxes';
 			break;
 	}
 	return toolType;

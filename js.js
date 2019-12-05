@@ -1,10 +1,31 @@
 var flashingUI;
 var timer;
+$.getScript('building.js');
 $.getScript('events.js');
 $.getScript('capital.js');
 $.getScript('labor.js');
 $.getScript('ui.js');
+createLand(4);
 
+function createLand(size){
+	var htmlStr;
+	var landArr = ['empty', 'plains', 'forest', 'mountain'];
+	var startPointNeeded=true;
+	for (var y=0; y<size; y++){
+		htmlStr+='<tr>';
+		for (var x=0; x<size; x++){
+			var landType = landArr[fetchRandomNum(1,4)-1];
+			htmlStr+="<td class='land " + landType + "'>"
+			if (startPointNeeded && (fetchRandomNum(1, size*size)==1 || (x==size-1 && x==y))){
+				htmlStr+="X";
+				startPointNeeded=false;
+			}
+			htmlStr+="</td>";
+		}
+		htmlStr+='</tr>';
+	}
+	$('#landContainer').html(htmlStr);
+}
 function automate(){
 	var campfireBurning = isCampfireBurning();
 	var listOfJobs = fetchListOfJobs('overseen');
@@ -17,9 +38,7 @@ function automate(){
 			var campfireFloorChance = fetchCampfireFloorChance();
 			updateCampfireFloorChance(campfireFloorChance+1);
 		} else {
-
 			updateCampfire();
-			$('#campfire').addClass('hidden');
 		}
 	} 
 	$.each(listOfJobs, function(i, job){
@@ -45,30 +64,21 @@ function automate(){
 				}
 			}
 			if (resourceType=='Wood' && numOfResources>=fetch('People')){
-				revealCampfire();
+				reveal('#campfire');
 			} else if (resourceType=='Food'){
 				numOfResources=checkFoodLimit(numOfResources, numOfClickers);
-			} else if (resourceType=='Stone'){
-					var granaryCost = $('#granaryCost').val();
-					numOfResources>=granaryCost ? $('#createGranary').removeClass('hidden') : $('#createGranary').addClass('hidden');
+			} 
 
-			}
-			if (numOfResources>0 && ((resourceType=='Stone'  && fetch('Wood')>0)
-			|| (resourceType=='Wood' && fetch('Stone')>0))){
-				$('.makeStoneTool').removeClass('hidden');
-			}
 
 			update(resourceType, numOfResources);
 		}
 	});
-}
-function blink(selector, color){
-	$(selector).css("color", color);
-	setTimeout (function(){
-		$(selector).css("color", "black");
-	}, 500);
+	refreshUI();
 }
 
+function firstCharLC(str){
+	return str.charAt(0).toLowerCase() + str.slice(1);
+}
 
 
 function fetch(what){
@@ -77,7 +87,9 @@ function fetch(what){
 function fetchCampfireFloorChance(){
 	return Number($('#campfireFloorChance').val());
 }
-
+function fetchChanceToCreateNewPerson (){
+	return fetch('People')*2;
+}
 function fetchClickCounter(){
 	return Number($('#clickCounter').val());
 }
@@ -103,15 +115,11 @@ function isCampfireBurning(){
 	return $('#campfire').hasClass('on');
 }
 
-function revealCampfire(){
-	$('#campfire').removeClass('hidden');	
-}
 function startTimer (){
 	var startingSeconds = 30;
 	var startingMinutes = 0;
 	$("#minutesRemaining").html(startingMinutes);
 	$('#secondsRemaining').html(startingSeconds);
-	$("#timeCaption").css("display", "inline");
 	return setInterval(function(){
 		automate();
 		updateNewPopProgress();
@@ -133,25 +141,22 @@ function startTimer (){
 		}
 		if (seconds<10){
 			seconds= "0" + seconds;
-		}
-		if (seconds<=10 && fetch('Food')<fetch('People')){
-			blink ("#timeRemaining", "red");
-			blink ("#numOfFood", "red");
+			if (fetch('Food')<fetch('People')){
+				blink('#secondsRemaining', 'red');
+				blink('#numOfFood', 'red');
+			}
 		}
 		$("#minutesRemaining").html(minutes);
 		$("#secondsRemaining").html(seconds);
-		
+
 	}, 1000);
 }
 
 function stopTimer(){
-	$("#timeCaption").css("display", "none");
+	hide ("#timeCaption");
 	clearInterval(timer);
 }
 function update(what, n){
-	if (what=='Food'){
-		console.log(n);
-	}
 	$('#numOf' + what).html(n);
 }
 function updateCampfire(){
